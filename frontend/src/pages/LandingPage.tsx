@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import  { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Edit3, Shield, Zap, ChevronRight } from 'lucide-react';
 

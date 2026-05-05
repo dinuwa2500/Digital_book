@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bookmark, Save, List } from 'lucide-react';
 import api from '../../services/api';
 
-import { motion } from 'framer-motion';
+
 
 interface PageEditorProps {
   page: any;
