@@ -17,6 +17,14 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
   const [saving, setSaving] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(page.isBookmarked || false);
+  
+  // Track original state to prevent unnecessary saves
+  const [originalState, setOriginalState] = useState({
+    content: page.content || '',
+    date: page.date || '',
+    fontColor: page.fontColor || '#111111'
+  });
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset when navigating to a different page
@@ -27,20 +35,37 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
     setIsBookmarked(page.isBookmarked || false);
     setIsDirty(false);
     setSavedFeedback(false);
+    setOriginalState({
+      content: page.content || '',
+      date: page.date || '',
+      fontColor: page.fontColor || '#111111'
+    });
   }, [page._id]);
 
-  // Auto-save: 3 seconds after last keystroke
+  // Auto-save: 8 seconds after last keystroke
   useEffect(() => {
     if (!isDirty) return;
-    const timer = setTimeout(() => handleSave(), 3000);
+    const timer = setTimeout(() => handleSave(), 8000);
     return () => clearTimeout(timer);
   }, [content, date, fontColor, isDirty]);
 
   const handleSave = async () => {
     if (!isDirty || saving) return;
+    
+    // Performance Fix: Only save if actually changed
+    if (
+      content === originalState.content &&
+      date === originalState.date &&
+      fontColor === originalState.fontColor
+    ) {
+      setIsDirty(false);
+      return;
+    }
+
     setSaving(true);
     try {
       await onSave(content, date, fontColor);
+      setOriginalState({ content, date, fontColor });
       setIsDirty(false);
       setSavedFeedback(true);
       setTimeout(() => setSavedFeedback(false), 2000);
@@ -166,6 +191,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
           type="text"
           value={date}
           onChange={e => { setDate(e.target.value); setIsDirty(true); }}
+          onBlur={handleSave}
           placeholder="Date"
           className="bg-transparent outline-none border-none font-serif italic text-stone-500 text-sm w-24 shrink-0 placeholder:text-stone-300"
         />
@@ -210,6 +236,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
           ref={textareaRef}
           value={content}
           onChange={e => { setContent(e.target.value); setIsDirty(true); }}
+          onBlur={handleSave}
           placeholder="Start writing…"
           spellCheck={false}
           style={{
