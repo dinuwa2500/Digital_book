@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --book-bg: #fdfbf7;
+  --paper-line: #cbd5e1;
+  --margin-line: #fca5a5;
+  --gutter-shadow: rgba(0,0,0,0.15);
+  --app-bg: #1c1917;
+  --line-height: 32px; /* MUST match LINE_HEIGHT in PageEditor.tsx */
+}
+
+.dark {
+  --book-bg: #262626;
+  --paper-line: #404040;
+  --margin-line: #ef4444;
+  --gutter-shadow: rgba(0,0,0,0.4);
+  --app-bg: #0a0a0a;
+}
+
+body {
+  @apply text-gray-800 antialiased overflow-x-hidden transition-colors duration-500;
+  background-color: var(--app-bg);
+}
+
+/* ── Paper Texture — applied ONLY to the writing area div in PageEditor ── */
+.paper-texture {
+  background-color: var(--book-bg);
+  background-image:
+    /* horizontal ruled lines every 32px */
+    linear-gradient(var(--paper-line) 1px, transparent 1px),
+    /* vertical red margin line */
+    linear-gradient(90deg, transparent 55px, var(--margin-line) 1px, transparent 56px);
+  background-size: 100% 32px, 100% 100%;
+  /* Start lines at y=0 of this div — textarea also starts at y=0 */
+  background-position: 0 0;
+  background-repeat: repeat-y, no-repeat;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+/* Paper grain — use pointer-events:none and keep it BEHIND content with isolation */
+.paper-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+  opacity: 0.25;
+  pointer-events: none;  /* must never block clicks */
+  z-index: 0;
+}
+
+/* Every child of .paper-texture sits ABOVE the ::before grain */
+.paper-texture > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Date header row: one full 32px line-height cell ── */
+.date-section {
+  height: var(--line-height);
+  line-height: var(--line-height);
+  border-bottom: 2px solid rgba(252, 165, 165, 0.55);
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background-image: linear-gradient(90deg, transparent 63px, var(--margin-line) 1px, transparent 64px);
+  background-size: 100% 100%;
+}
+
+/* ── Gutter shadows ── */
+.left-page-gutter {
+  background: linear-gradient(to right, transparent 85%, var(--gutter-shadow) 100%);
+  pointer-events: none;
+}
+.right-page-gutter {
+  background: linear-gradient(to left, transparent 85%, var(--gutter-shadow) 100%);
+  pointer-events: none;
+}
+
+/* ── Page curvature ── */
+.page-curve-left  { box-shadow: -5px 0 15px rgba(0,0,0,0.1) inset; }
+.page-curve-right { box-shadow:  5px 0 15px rgba(0,0,0,0.1) inset; }
+
+/* ── Book drop shadow ── */
+.book-container {
+  box-shadow:
+    0 1px 1px rgba(0,0,0,0.15),
+    0 10px 20px rgba(0,0,0,0.3),
+    0 20px 40px rgba(0,0,0,0.4);
+  border-radius: 4px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
