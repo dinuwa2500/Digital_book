@@ -7,6 +7,14 @@ const pageSchema = new mongoose.Schema({
   content: { type: String, default: '' },
   fontColor: { type: String, default: '#111111' },
   isBookmarked: { type: Boolean, default: false },
+  images: [{
+    id: String,
+    src: String,
+    x: Number,
+    y: Number,
+    width: Number,
+    height: Number
+  }],
   lastSavedAt: { type: Date, default: Date.now }
 });
 

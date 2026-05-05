@@ -8,7 +8,7 @@ interface BookViewerProps {
   rightPage: any;
   onNext: () => void;
   onPrev: () => void;
-  onSave: (pageId: string, content: string, date: string, fontColor: string) => void;
+  onSave: (pageId: string, content: string, date: string, fontColor: string, images: any[]) => void;
   pageCount?: number; // e.g. 80, 120, 160, 200
 }
 
@@ -53,7 +53,7 @@ const BookViewer: React.FC<BookViewerProps> = ({
               <div className="flex-1 overflow-hidden h-full relative z-20 flex flex-col px-3 pt-2 pb-1">
                 <PageEditor
                   page={leftPage}
-                  onSave={(content, date, fontColor) => onSave(leftPage._id, content, date, fontColor)}
+                  onSave={(content, date, fontColor, images) => onSave(leftPage._id, content, date, fontColor, images)}
                 />
               </div>
             ) : (
@@ -85,7 +85,7 @@ const BookViewer: React.FC<BookViewerProps> = ({
               <div className="flex-1 overflow-hidden h-full relative z-20 flex flex-col px-3 pt-2 pb-1">
                 <PageEditor
                   page={rightPage}
-                  onSave={(content, date, fontColor) => onSave(rightPage._id, content, date, fontColor)}
+                  onSave={(content, date, fontColor, images) => onSave(rightPage._id, content, date, fontColor, images)}
                 />
               </div>
             ) : (

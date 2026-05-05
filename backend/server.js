@@ -18,7 +18,8 @@ const app = express();
 // Security Middleware
 app.use(helmet());
 app.use(compression());
-app.use(express.json({ limit: '1mb' })); // Limit body size
+app.use(express.json({ limit: '50mb' })); // Increased limit for base64 image uploads
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Rate Limiting
 const limiter = rateLimit({

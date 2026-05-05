@@ -58,12 +58,12 @@ const BookPage = () => {
   };
 
   // ─── Save ─────────────────────────────────────────────────────
-  const handleSaveContent = async (pageId: string, content: string, date: string, fontColor: string) => {
+  const handleSaveContent = async (pageId: string, content: string, date: string, fontColor: string, images: any[] = []) => {
     try {
-      await api.patch(`/pages/${pageId}`, { content, date, fontColor });
+      await api.patch(`/pages/${pageId}`, { content, date, fontColor, images });
       setPages((prev: any[]) =>
         prev.map((p: any) =>
-          p._id === pageId ? { ...p, content, date, fontColor, lastSavedAt: new Date() } : p
+          p._id === pageId ? { ...p, content, date, fontColor, images, lastSavedAt: new Date() } : p
         )
       );
     } catch (err) {

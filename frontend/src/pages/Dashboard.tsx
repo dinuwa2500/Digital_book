@@ -10,6 +10,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchBooks();
+    document.title = 'My Library | Digital Exercise Book';
   }, []);
 
   const fetchBooks = async () => {

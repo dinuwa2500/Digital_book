@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bookmark, Save, List } from 'lucide-react';
 import api from '../../services/api';
 
+import { motion } from 'framer-motion';
+
 interface PageEditorProps {
   page: any;
-  onSave: (content: string, date: string, fontColor: string) => void;
+  onSave: (content: string, date: string, fontColor: string, images: any[]) => void;
 }
 
 const LINE_HEIGHT = 32; // px — must match CSS background-size and BookViewer.tsx
@@ -17,12 +19,14 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
   const [saving, setSaving] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(page.isBookmarked || false);
+  const [images, setImages] = useState<any[]>(page.images || []);
   
   // Track original state to prevent unnecessary saves
   const [originalState, setOriginalState] = useState({
     content: page.content || '',
     date: page.date || '',
-    fontColor: page.fontColor || '#111111'
+    fontColor: page.fontColor || '#111111',
+    images: page.images || []
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -33,12 +37,14 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
     setDate(page.date || '');
     setFontColor(page.fontColor || '#111111');
     setIsBookmarked(page.isBookmarked || false);
+    setImages(page.images || []);
     setIsDirty(false);
     setSavedFeedback(false);
     setOriginalState({
       content: page.content || '',
       date: page.date || '',
-      fontColor: page.fontColor || '#111111'
+      fontColor: page.fontColor || '#111111',
+      images: page.images || []
     });
   }, [page._id]);
 
@@ -47,7 +53,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
     if (!isDirty) return;
     const timer = setTimeout(() => handleSave(), 8000);
     return () => clearTimeout(timer);
-  }, [content, date, fontColor, isDirty]);
+  }, [content, date, fontColor, images, isDirty]);
 
   const handleSave = async () => {
     if (!isDirty || saving) return;
@@ -56,7 +62,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
     if (
       content === originalState.content &&
       date === originalState.date &&
-      fontColor === originalState.fontColor
+      fontColor === originalState.fontColor &&
+      JSON.stringify(images) === JSON.stringify(originalState.images)
     ) {
       setIsDirty(false);
       return;
@@ -64,8 +71,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
 
     setSaving(true);
     try {
-      await onSave(content, date, fontColor);
-      setOriginalState({ content, date, fontColor });
+      await onSave(content, date, fontColor, images);
+      setOriginalState({ content, date, fontColor, images });
       setIsDirty(false);
       setSavedFeedback(true);
       setTimeout(() => setSavedFeedback(false), 2000);
@@ -131,6 +138,64 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
       ta.focus();
       ta.setSelectionRange(selectionStart, selectionStart);
     });
+  };
+
+  // ── Paste Logic for Images ──────────────────────────────────────
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (!file) continue;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const newImage = {
+            id: Date.now().toString() + Math.random().toString(36).substring(7),
+            src: event.target?.result as string,
+            x: 50,
+            y: 50,
+            width: 250,
+            height: 250
+          };
+          setImages(prev => {
+            const updated = [...prev, newImage];
+            setIsDirty(true);
+            return updated;
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  // ── Click to Type on Empty Lines ────────────────────────────────
+  const handleEditorClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    const ta = e.currentTarget;
+    const rect = ta.getBoundingClientRect();
+    const clickY = e.clientY - rect.top + ta.scrollTop;
+    
+    const paddingTop = 5; // Matches the textarea style.paddingTop
+    const targetLineIndex = Math.floor((clickY - paddingTop) / LINE_HEIGHT);
+    
+    const lines = content.split('\n');
+    
+    // If clicked below the current text, add newlines to reach that line
+    if (targetLineIndex >= lines.length) {
+      const newlinesToAdd = targetLineIndex - lines.length + 1;
+      const paddedContent = content + '\n'.repeat(newlinesToAdd);
+      
+      setContent(paddedContent);
+      setIsDirty(true);
+      
+      // Move cursor to the end
+      requestAnimationFrame(() => {
+        ta.focus();
+        ta.setSelectionRange(paddedContent.length, paddedContent.length);
+      });
+    }
   };
 
   return (
@@ -237,7 +302,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
           value={content}
           onChange={e => { setContent(e.target.value); setIsDirty(true); }}
           onBlur={handleSave}
-          placeholder="Start writing…"
+          onPaste={handlePaste}
+          onClick={handleEditorClick}
+          placeholder="Start writing or paste an image…"
           spellCheck={false}
           style={{
             lineHeight: `${LINE_HEIGHT}px`,
@@ -251,8 +318,106 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
             paddingBottom: 0,
             boxSizing: 'border-box',
           }}
-          className="absolute inset-0 w-full h-full bg-transparent resize-none outline-none placeholder:text-stone-300/50"
+          className="absolute inset-0 w-full h-full bg-transparent resize-none outline-none placeholder:text-stone-300/50 z-0"
         />
+
+        {/* ── Images Layer ── */}
+        {images.map((img, idx) => (
+          <div
+            key={img.id}
+            style={{
+              position: 'absolute',
+              left: img.x || 50,
+              top: img.y || 50,
+              width: img.width || 250,
+              height: img.height || 250,
+              zIndex: 50,
+            }}
+            className="group cursor-move"
+            onPointerDown={(e) => {
+              // Simple drag implementation
+              e.preventDefault();
+              const startX = e.clientX;
+              const startY = e.clientY;
+              const originalX = img.x || 50;
+              const originalY = img.y || 50;
+
+              const onPointerMove = (moveEvent: PointerEvent) => {
+                setImages(prev => {
+                  const next = [...prev];
+                  next[idx] = { 
+                    ...next[idx], 
+                    x: originalX + (moveEvent.clientX - startX), 
+                    y: originalY + (moveEvent.clientY - startY) 
+                  };
+                  return next;
+                });
+                setIsDirty(true);
+              };
+
+              const onPointerUp = () => {
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+                handleSave();
+              };
+
+              window.addEventListener('pointermove', onPointerMove);
+              window.addEventListener('pointerup', onPointerUp);
+            }}
+          >
+            <img 
+              src={img.src} 
+              alt="Pasted" 
+              className="w-full h-full object-cover rounded shadow-md pointer-events-none"
+            />
+            
+            {/* Resize handle */}
+            <div 
+              className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-0 group-hover:opacity-100 bg-indigo-500/80 rounded-tl-full shadow"
+              onPointerDown={(e) => {
+                e.stopPropagation(); // prevent drag
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = img.width || 250;
+                const startHeight = img.height || 250;
+
+                const onPointerMove = (moveEvent: PointerEvent) => {
+                  setImages(prev => {
+                    const next = [...prev];
+                    next[idx] = { 
+                      ...next[idx], 
+                      width: Math.max(50, startWidth + (moveEvent.clientX - startX)), 
+                      height: Math.max(50, startHeight + (moveEvent.clientY - startY)) 
+                    };
+                    return next;
+                  });
+                  setIsDirty(true);
+                };
+
+                const onPointerUp = () => {
+                  window.removeEventListener('pointermove', onPointerMove);
+                  window.removeEventListener('pointerup', onPointerUp);
+                  handleSave(); // Optional immediate save on resize end
+                };
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+              }}
+            />
+            
+            {/* Delete button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setImages(prev => prev.filter(i => i.id !== img.id));
+                setIsDirty(true);
+              }}
+              className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-md transition-opacity z-50 hover:bg-red-600"
+            >
+              ×
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* ── Footer ── */}
@@ -260,7 +425,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
         className="shrink-0 flex justify-between items-center px-3 text-[9px] uppercase tracking-widest text-stone-300 italic border-t border-stone-100"
         style={{ height: 22 }}
       >
-        <span>{content.length} chars</span>
+        <span>{content.length} chars | {images.length} images</span>
         <span>
           {page.lastSavedAt
             ? new Date(page.lastSavedAt).toLocaleTimeString([], {

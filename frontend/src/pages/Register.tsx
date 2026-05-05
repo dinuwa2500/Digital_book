@@ -9,6 +9,10 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
+  
+  React.useEffect(() => {
+    document.title = 'Join the Archive | Digital Exercise Book';
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -8,6 +8,10 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
+  
+  React.useEffect(() => {
+    document.title = 'Sign In | Digital Exercise Book';
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +78,11 @@ const Login = () => {
             Sign Up
           </Link>
         </p>
+
+        <div className="mt-8 pt-8 border-t border-stone-100 flex justify-center gap-6 text-[10px] uppercase tracking-widest text-stone-400 font-serif italic">
+          <Link to="/privacy-policy" className="hover:text-stone-800 transition-colors">Privacy Policy</Link>
+          <Link to="/terms-of-service" className="hover:text-stone-800 transition-colors">Terms of Service</Link>
+        </div>
       </div>
     </div>
   );

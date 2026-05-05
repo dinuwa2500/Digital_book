@@ -14,6 +14,7 @@ exports.createPage = async (req, res, next) => {
 exports.getPagesByChapter = async (req, res, next) => {
   try {
     const pages = await Page.find({ chapterId: req.params.chapterId });
+   
     res.json(pages);
   } catch (err) {
     next(err);
@@ -22,10 +23,11 @@ exports.getPagesByChapter = async (req, res, next) => {
 
 exports.savePageContent = async (req, res, next) => {
   try {
-    const { content, date, fontColor } = req.body;
+    const { content, date, fontColor, images } = req.body;
+ 
     const page = await Page.findByIdAndUpdate(
       req.params.id,
-      { content, date, fontColor },
+      { content, date, fontColor, images },
       { new: true }
     );
     if (!page) return res.status(404).json({ message: 'Page not found' });
