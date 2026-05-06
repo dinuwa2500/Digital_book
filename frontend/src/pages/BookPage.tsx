@@ -219,14 +219,41 @@ const BookPage = () => {
                       </span>
                     </div>
 
-                    {/* Active Chapter Controls */}
+                    {/* Active Chapter Controls & Pages List */}
                     {isActive && (
-                      <div className="pl-6 pr-3 mt-2 flex flex-col gap-2">
-                        {/* Pages list summary could go here, for now just the add button */}
+                      <div className="pl-6 pr-3 mt-1 flex flex-col gap-1">
+                        {/* List of actual pages */}
+                        <div className="flex flex-col gap-0.5 mb-2">
+                          {pages.map((page: any, idx: number) => {
+                            const isPageInCurrentSpread = idx === currentIndex || idx === currentIndex + 1;
+                            return (
+                              <div
+                                key={page._id}
+                                onClick={() => setCurrentIndex(Math.floor(idx / 2) * 2)}
+                                className={`group flex items-center justify-between px-2 py-1.5 rounded-sm cursor-pointer transition-all ${
+                                  isPageInCurrentSpread 
+                                    ? 'bg-indigo-500/10 text-indigo-400' 
+                                    : 'text-stone-500 hover:text-stone-300 hover:bg-white/5'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                  <FileText className={`w-3 h-3 shrink-0 ${isPageInCurrentSpread ? 'text-indigo-400' : 'text-stone-700 group-hover:text-stone-500'}`} />
+                                  <span className="text-[11px] font-serif truncate">
+                                    {page.title || `Page ${idx + 1}`}
+                                  </span>
+                                </div>
+                                {isPageInCurrentSpread && (
+                                  <div className="w-1 h-1 rounded-full bg-indigo-500" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
                         {!showNewPage && (
                           <button
                             onClick={(e) => { e.stopPropagation(); setShowNewPage(chapter._id); setNewPageTitle(''); }}
-                            className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 py-1 transition-colors w-full text-left"
+                            className="flex items-center gap-1.5 text-[10px] text-stone-500 hover:text-indigo-400 py-1 px-2 transition-colors w-full text-left border border-dashed border-white/5 hover:border-indigo-500/30 rounded-sm"
                           >
                             <Plus className="w-3 h-3" /> Add new page
                           </button>
@@ -234,20 +261,20 @@ const BookPage = () => {
                         
                         {/* Inline New Page form for this chapter */}
                         {showNewPage === chapter._id && (
-                          <div className="flex flex-col gap-1.5 mt-1">
+                          <div className="flex flex-col gap-1.5 mt-1 bg-black/20 p-2 rounded-sm border border-white/5">
                             <input
                               autoFocus
                               value={newPageTitle}
                               onChange={e => setNewPageTitle(e.target.value)}
                               onKeyDown={e => e.key === 'Enter' && submitPage(chapter._id)}
                               placeholder="Page title…"
-                              className="w-full bg-black/20 border border-white/10 text-stone-200 px-2 py-1 text-xs font-serif outline-none rounded-sm placeholder:text-stone-600 focus:border-indigo-500/50"
+                              className="w-full bg-black/40 border border-white/10 text-stone-200 px-2 py-1 text-xs font-serif outline-none rounded-sm placeholder:text-stone-700 focus:border-indigo-500/50"
                             />
                             <div className="flex gap-1">
                               <button onClick={() => submitPage(chapter._id)} className="flex-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white py-1 rounded-sm transition-colors">
                                 Add
                               </button>
-                              <button onClick={() => setShowNewPage(null)} className="text-[10px] text-stone-400 hover:text-white px-2 py-1 transition-colors bg-white/5 rounded-sm">
+                              <button onClick={() => setShowNewPage(null)} className="text-[10px] text-stone-500 hover:text-white px-2 py-1 transition-colors bg-white/5 rounded-sm">
                                 Cancel
                               </button>
                             </div>
