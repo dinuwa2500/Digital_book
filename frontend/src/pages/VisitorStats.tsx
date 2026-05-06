@@ -6,22 +6,81 @@ import { useNavigate } from 'react-router-dom';
 const VisitorStats = () => {
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessKey, setAccessKey] = useState('');
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-        const res = await axios.get(`${apiUrl}/stats/count`);
-        setCount(res.data.uniqueVisitors);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCount();
-  }, []);
+  // Change this to your desired secret key
+  const SECRET_KEY = 'ADMIN2026';
+
+  const handleVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (accessKey === SECRET_KEY) {
+      setIsAuthorized(true);
+      fetchCount();
+    } else {
+      setError('Invalid Access Key');
+      setAccessKey('');
+    }
+  };
+
+  const fetchCount = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await axios.get(`${apiUrl}/stats/count`);
+      setCount(res.data.uniqueVisitors);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // If not authorized, show the Lock Screen
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 font-serif">
+        <div className="max-w-md w-full bg-[#111] border border-white/5 rounded-2xl p-10 shadow-2xl text-center relative overflow-hidden">
+           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50" />
+           
+           <div className="mb-8 flex justify-center">
+             <div className="p-4 bg-white/5 rounded-full border border-white/10">
+               <Shield className="w-8 h-8 text-indigo-400 animate-pulse" />
+             </div>
+           </div>
+
+           <h1 className="text-2xl font-bold mb-2">Restricted Access</h1>
+           <p className="text-stone-500 text-sm mb-8 italic">Enter the decryption key to view archive metrics.</p>
+
+           <form onSubmit={handleVerify} className="space-y-4">
+             <input
+               type="password"
+               value={accessKey}
+               onChange={(e) => setAccessKey(e.target.value)}
+               placeholder="Access Key"
+               autoFocus
+               className="w-full bg-black/50 border border-white/10 rounded-xl px-5 py-3 text-center tracking-[0.5em] focus:border-indigo-500/50 outline-none transition-all"
+             />
+             {error && <p className="text-red-500 text-xs mt-2 uppercase tracking-widest">{error}</p>}
+             <button 
+               type="submit"
+               className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
+             >
+               Verify Identity
+             </button>
+           </form>
+
+           <button 
+            onClick={() => navigate('/dashboard')}
+            className="mt-6 text-xs text-stone-600 hover:text-stone-400 transition-colors flex items-center justify-center gap-2 mx-auto"
+          >
+            <ArrowLeft className="w-3 h-3" /> Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6 font-serif">
