@@ -131,7 +131,7 @@ const BookPage = () => {
 
       {/* ── Top Bar ── */}
       <div className="h-14 bg-[#1a1a1a] dark:bg-[#0a0a0a] border-b border-white/5 flex items-center justify-between px-5 shrink-0">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors font-serif italic text-sm">
+        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors font-serif italic text-sm">
           <ChevronLeft className="w-4 h-4" /> Return to Study
         </button>
 

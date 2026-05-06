@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bookmark, Save, List } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Bookmark, Save, List, Pencil } from 'lucide-react';
 import api from '../../services/api';
+import DrawingCanvas from './DrawingCanvas';
 
 
 
@@ -20,6 +22,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(page.isBookmarked || false);
   const [images, setImages] = useState<any[]>(page.images || []);
+  const [isDrawing, setIsDrawing] = useState(false);
   
   // Track original state to prevent unnecessary saves
   const [originalState, setOriginalState] = useState({
@@ -234,6 +237,19 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
           </span>
         </button>
 
+        {/* ── Virtual Pen button ── */}
+        <button
+          onClick={() => setIsDrawing(true)}
+          title="Open virtual pen to draw or write"
+          className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-indigo-600 border border-stone-200 hover:border-indigo-200 rounded px-1.5 py-0.5 transition-colors"
+          style={{ fontSize: 11 }}
+        >
+          <Pencil className="w-3 h-3" />
+          <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
+            Pen
+          </span>
+        </button>
+
         {/* Divider */}
         <span className="text-stone-200 shrink-0 text-xs">|</span>
 
@@ -320,6 +336,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
           }}
           className="absolute inset-0 w-full h-full bg-transparent resize-none outline-none placeholder:text-stone-300/50 z-0"
         />
+
+       
 
         {/* ── Images Layer ── */}
         {images.map((img, idx) => (
@@ -435,6 +453,35 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
             : '—'}
         </span>
       </div>
+
+      {/* ── Virtual Pen Overlay (Portal to Body) ── */}
+      {isDrawing && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
+          <div className="w-full h-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col relative border border-white/20">
+            <DrawingCanvas 
+              initialColor={fontColor}
+              onCancel={() => setIsDrawing(false)}
+              onSave={(dataUrl) => {
+                const newImage = {
+                  id: Date.now().toString() + Math.random().toString(36).substring(7),
+                  src: dataUrl,
+                  x: 100,
+                  y: 100,
+                  width: 500,
+                  height: 400
+                };
+                setImages(prev => {
+                  const updated = [...prev, newImage];
+                  setIsDirty(true);
+                  return updated;
+                });
+                setIsDrawing(false);
+              }}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
