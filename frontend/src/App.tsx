@@ -19,6 +19,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return user ? <>{children}</> : <Navigate to="/login" />;
 };
 
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  // Redirect to dashboard if already logged in
+  return user ? <Navigate to="/dashboard" /> : <>{children}</>;
+};
+
 function App() {
   useEffect(() => {
     // Track visitor
@@ -37,12 +44,12 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/about" element={<AboutContact />} />
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
           <Route 
             path="/dashboard" 
             element={
