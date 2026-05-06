@@ -59,7 +59,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route path="/the-hidden-archive-stats" element={<VisitorStats />} />
+          <Route path="/stats" element={<VisitorStats />} />
         </Routes>
         <CookieConsent />
       </AuthProvider>
