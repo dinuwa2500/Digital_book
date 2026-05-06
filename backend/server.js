@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const chapterRoutes = require('./routes/chapterRoutes');
 const pageRoutes = require('./routes/pageRoutes');
+const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/chapters', chapterRoutes);
 app.use('/api/pages', pageRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
