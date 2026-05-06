@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { createChapter, getChaptersByBook } = require('../controllers/chapterController');
-const auth = require('../middleware/auth');
+const { auth, optionalAuth } = require('../middleware/auth');
 
-router.use(auth);
-router.post('/', createChapter);
-router.get('/book/:bookId', getChaptersByBook);
+router.post('/', auth, createChapter);
+router.get('/book/:bookId', optionalAuth, getChaptersByBook);
 
 module.exports = router;

@@ -3,6 +3,7 @@ import { Plus, Book as BookIcon, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const Dashboard = () => {
   const [books, setBooks] = useState([]);
@@ -23,13 +24,41 @@ const Dashboard = () => {
   };
 
   const createBook = async () => {
-    const title = prompt('Enter book title:');
-    if (!title) return;
-    try {
-      await api.post('/books', { title });
-      fetchBooks();
-    } catch (err) {
-      console.error(err);
+    const { value: title } = await Swal.fire({
+      title: 'Create New Volume',
+      input: 'text',
+      inputLabel: 'What shall we call this new record?',
+      inputPlaceholder: 'e.g. Theoretical Physics, 2026 Diary...',
+      background: '#1c1917',
+      color: '#fff',
+      confirmButtonColor: '#4f46e5',
+      confirmButtonText: 'Initialize Volume',
+      inputAttributes: {
+        autocapitalize: 'off'
+      },
+      showCancelButton: true,
+      customClass: {
+        popup: 'rounded-xl border border-white/10 font-serif',
+        input: 'bg-black/40 border-white/10 text-white rounded-lg px-4 py-2'
+      }
+    });
+
+    if (title) {
+      try {
+        await api.post('/books', { title });
+        fetchBooks();
+        Swal.fire({
+          icon: 'success',
+          title: 'Volume Created',
+          text: `"${title}" has been added to your library.`,
+          background: '#1c1917',
+          color: '#fff',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 

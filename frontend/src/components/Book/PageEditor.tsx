@@ -8,12 +8,13 @@ import DrawingCanvas from './DrawingCanvas';
 
 interface PageEditorProps {
   page: any;
-  onSave: (content: string, date: string, fontColor: string, images: any[]) => void;
+  onSave?: (content: string, date: string, fontColor: string, images: any[]) => void;
+  readOnly?: boolean;
 }
 
 const LINE_HEIGHT = 32; // px — must match CSS background-size and BookViewer.tsx
 
-const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
+const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false }) => {
   const [content, setContent] = useState(page.content || '');
   const [date, setDate] = useState(page.date || '');
   const [fontColor, setFontColor] = useState(page.fontColor || '#111111');
@@ -211,58 +212,65 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
       >
         {/* Bookmark toggle */}
         <button
-          onClick={toggleBookmark}
+          onClick={readOnly ? undefined : toggleBookmark}
+          disabled={readOnly}
           title={isBookmarked ? 'Remove bookmark' : 'Bookmark page'}
           className={`shrink-0 transition-colors ${
             isBookmarked ? 'text-red-500' : 'text-stone-300 hover:text-stone-500'
-          }`}
+          } ${readOnly ? 'cursor-default opacity-50' : ''}`}
         >
           <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
         </button>
 
         {/* ── Bullet Point button ── */}
-        <button
-          onMouseDown={e => {
-            // prevent textarea from losing focus before we read selection
-            e.preventDefault();
-            addBulletPoints();
-          }}
-          title="Add bullet point to selected line(s)"
-          className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-stone-700 border border-stone-200 hover:border-stone-400 rounded px-1.5 py-0.5 transition-colors"
-          style={{ fontSize: 11 }}
-        >
-          <List className="w-3 h-3" />
-          <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
-            Bullet
-          </span>
-        </button>
+        {!readOnly && (
+          <button
+            onMouseDown={e => {
+              // prevent textarea from losing focus before we read selection
+              e.preventDefault();
+              addBulletPoints();
+            }}
+            title="Add bullet point to selected line(s)"
+            className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-stone-700 border border-stone-200 hover:border-stone-400 rounded px-1.5 py-0.5 transition-colors"
+            style={{ fontSize: 11 }}
+          >
+            <List className="w-3 h-3" />
+            <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
+              Bullet
+            </span>
+          </button>
+        )}
 
         {/* ── Virtual Pen button ── */}
-        <button
-          onClick={() => setIsDrawing(true)}
-          title="Open virtual pen to draw or write"
-          className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-indigo-600 border border-stone-200 hover:border-indigo-200 rounded px-1.5 py-0.5 transition-colors"
-          style={{ fontSize: 11 }}
-        >
-          <Pencil className="w-3 h-3" />
-          <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
-            Pen
-          </span>
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setIsDrawing(true)}
+            title="Open virtual pen to draw or write"
+            className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-indigo-600 border border-stone-200 hover:border-indigo-200 rounded px-1.5 py-0.5 transition-colors"
+            style={{ fontSize: 11 }}
+          >
+            <Pencil className="w-3 h-3" />
+            <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
+              Pen
+            </span>
+          </button>
+        )}
 
         {/* Divider */}
         <span className="text-stone-200 shrink-0 text-xs">|</span>
 
         {/* ── Font Color picker ── */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <input 
-            type="color"
-            value={fontColor}
-            onChange={(e) => { setFontColor(e.target.value); setIsDirty(true); }}
-            className="w-4 h-4 rounded-full border-none cursor-pointer bg-transparent"
-            title="Change font color"
-          />
-        </div>
+        {!readOnly && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <input 
+              type="color"
+              value={fontColor}
+              onChange={(e) => { setFontColor(e.target.value); setIsDirty(true); }}
+              className="w-4 h-4 rounded-full border-none cursor-pointer bg-transparent"
+              title="Change font color"
+            />
+          </div>
+        )}
 
         {/* Divider */}
         <span className="text-stone-200 shrink-0 text-xs">|</span>
@@ -271,10 +279,11 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
         <input
           type="text"
           value={date}
-          onChange={e => { setDate(e.target.value); setIsDirty(true); }}
+          onChange={e => { if(!readOnly) { setDate(e.target.value); setIsDirty(true); } }}
           onBlur={handleSave}
+          readOnly={readOnly}
           placeholder="Date"
-          className="bg-transparent outline-none border-none font-serif italic text-stone-500 text-sm w-24 shrink-0 placeholder:text-stone-300"
+          className={`bg-transparent outline-none border-none font-serif italic text-stone-500 text-sm w-24 shrink-0 placeholder:text-stone-300 ${readOnly ? 'cursor-default' : ''}`}
         />
 
         <span className="text-stone-200 shrink-0 text-xs">|</span>
@@ -316,23 +325,25 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
         <textarea
           ref={textareaRef}
           value={content}
-          onChange={e => { setContent(e.target.value); setIsDirty(true); }}
+          onChange={e => { if(!readOnly) { setContent(e.target.value); setIsDirty(true); } }}
           onBlur={handleSave}
-          onPaste={handlePaste}
-          onClick={handleEditorClick}
-          placeholder="Start writing or paste an image…"
+          onPaste={readOnly ? undefined : handlePaste}
+          onClick={readOnly ? undefined : handleEditorClick}
+          readOnly={readOnly}
+          placeholder={readOnly ? "" : "Start writing or paste an image…"}
           spellCheck={false}
           style={{
             lineHeight: `${LINE_HEIGHT}px`,
             fontSize: '1.05rem',
             fontFamily: '"Georgia", "Times New Roman", serif',
             color: fontColor,
-            caretColor: fontColor,
+            caretColor: readOnly ? 'transparent' : fontColor,
             paddingTop: 5,              // nudges baseline just above the rule
             paddingLeft: 64,            // indent past the red margin line (at 55px)
             paddingRight: 12,
             paddingBottom: 0,
             boxSizing: 'border-box',
+            cursor: readOnly ? 'default' : 'text',
           }}
           className="absolute inset-0 w-full h-full bg-transparent resize-none outline-none placeholder:text-stone-300/50 z-0"
         />
@@ -351,8 +362,9 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
               height: img.height || 250,
               zIndex: 50,
             }}
-            className="group cursor-move"
+            className={`group ${readOnly ? 'cursor-default' : 'cursor-move'}`}
             onPointerDown={(e) => {
+              if (readOnly) return;
               // Simple drag implementation
               e.preventDefault();
               const startX = e.clientX;
@@ -424,16 +436,18 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave }) => {
             />
             
             {/* Delete button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setImages(prev => prev.filter(i => i.id !== img.id));
-                setIsDirty(true);
-              }}
-              className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-md transition-opacity z-50 hover:bg-red-600"
-            >
-              ×
-            </button>
+            {!readOnly && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImages(prev => prev.filter(i => i.id !== img.id));
+                  setIsDirty(true);
+                }}
+                className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-md transition-opacity z-50 hover:bg-red-600"
+              >
+                ×
+              </button>
+            )}
           </div>
         ))}
       </div>

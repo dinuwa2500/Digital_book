@@ -8,8 +8,9 @@ interface BookViewerProps {
   rightPage: any;
   onNext: () => void;
   onPrev: () => void;
-  onSave: (pageId: string, content: string, date: string, fontColor: string, images: any[]) => void;
-  pageCount?: number; // e.g. 80, 120, 160, 200
+  onSave?: (pageId: string, content: string, date: string, fontColor: string, images: any[]) => void;
+  pageCount?: number; 
+  readOnly?: boolean;
 }
 
 const LINE_HEIGHT = 32; // px — must match PageEditor.tsx & CSS --line-height
@@ -21,6 +22,7 @@ const BookViewer: React.FC<BookViewerProps> = ({
   onPrev, 
   onSave,
   pageCount = 80,
+  readOnly = false,
 }) => {
   // 1 date-header row + pageCount writing lines + 1 footer row
   const bookHeightPx = (pageCount + 2) * LINE_HEIGHT;
@@ -53,7 +55,8 @@ const BookViewer: React.FC<BookViewerProps> = ({
               <div className="flex-1 overflow-hidden h-full relative z-20 flex flex-col px-3 pt-2 pb-1">
                 <PageEditor
                   page={leftPage}
-                  onSave={(content, date, fontColor, images) => onSave(leftPage._id, content, date, fontColor, images)}
+                  onSave={(content, date, fontColor, images) => onSave?.(leftPage._id, content, date, fontColor, images)}
+                  readOnly={readOnly}
                 />
               </div>
             ) : (
@@ -85,7 +88,8 @@ const BookViewer: React.FC<BookViewerProps> = ({
               <div className="flex-1 overflow-hidden h-full relative z-20 flex flex-col px-3 pt-2 pb-1">
                 <PageEditor
                   page={rightPage}
-                  onSave={(content, date, fontColor, images) => onSave(rightPage._id, content, date, fontColor, images)}
+                  onSave={(content, date, fontColor, images) => onSave?.(rightPage._id, content, date, fontColor, images)}
+                  readOnly={readOnly}
                 />
               </div>
             ) : (

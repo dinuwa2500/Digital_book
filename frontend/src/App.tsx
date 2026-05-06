@@ -58,14 +58,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/book/:id" 
-            element={
-              <ProtectedRoute>
-                <BookPage />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/book/:id" element={<BookPage />} />
           <Route path="/stats" element={<VisitorStats />} />
         </Routes>
         <CookieConsent />

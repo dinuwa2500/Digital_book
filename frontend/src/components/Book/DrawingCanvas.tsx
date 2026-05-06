@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { X, Eraser, Check, Type, Pencil } from "lucide-react";
+import Swal from 'sweetalert2';
 
 interface DrawingCanvasProps {
   onSave: (dataUrl: string) => void;
@@ -54,7 +55,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     ctx.moveTo(x, y);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent) => {
+  const handleCanvasClick = async (e: React.MouseEvent) => {
     if (tool !== "text") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -62,7 +63,19 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     if (!ctx) return;
 
     const { x, y } = getCoordinates(e);
-    const text = prompt("Enter your note:");
+    
+    const { value: text } = await Swal.fire({
+      title: 'Enter your note',
+      input: 'text',
+      inputPlaceholder: 'Write something...',
+      showCancelButton: true,
+      confirmButtonText: 'Add to page',
+      confirmButtonColor: '#4f46e5',
+      customClass: {
+        popup: 'rounded-xl font-serif'
+      }
+    });
+
     if (text) {
       ctx.font = `${brushSize * 5}px Georgia, serif`;
       ctx.fillStyle = color;

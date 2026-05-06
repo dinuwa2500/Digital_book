@@ -4,8 +4,12 @@ import api from '../services/api';
 import BookViewer from '../components/Book/BookViewer';
 import {
   ChevronLeft, Plus, List, Moon, Sun, Loader2,
-  BookOpen, FileText, ChevronRight
+  BookOpen, FileText, ChevronRight, Share2, Globe, Lock,
+  X
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { showToast } from '../utils/alerts';
+import Swal from 'sweetalert2';
 
 const BookPage = () => {
   const { id } = useParams();
@@ -18,6 +22,10 @@ const BookPage = () => {
   const [loading, setLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [pageCount, setPageCount] = useState(80);
+  const [book, setBook] = useState<any>(null);
+  const { user } = useAuth();
+  const [isOwner, setIsOwner] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Inline creation state
   const [newChapterTitle, setNewChapterTitle] = useState('');
@@ -31,7 +39,15 @@ const BookPage = () => {
   const fetchBookData = async () => {
     try {
       setLoading(true);
-      const chapterRes = await api.get(`/chapters/book/${id}`);
+      const [bookRes, chapterRes] = await Promise.all([
+        api.get(`/books/${id}`),
+        api.get(`/chapters/book/${id}`)
+      ]);
+      
+      const bookData = bookRes.data;
+      setBook(bookData);
+      setIsOwner(user && bookData.userId === (user as any).id);
+
       const fetchedChapters: any[] = chapterRes.data;
       setChapters(fetchedChapters);
 
@@ -45,6 +61,15 @@ const BookPage = () => {
     } catch (err) {
       console.error(err);
       setLoading(false);
+    }
+  };
+
+  const togglePrivacy = async () => {
+    try {
+      const res = await api.patch(`/books/${id}/public`);
+      setBook(res.data);
+    } catch (err) {
+      console.error('Failed to toggle privacy', err);
     }
   };
 
@@ -153,13 +178,25 @@ const BookPage = () => {
             {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
+          {/* Share Button */}
+          {isOwner && (
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-1.5 text-xs bg-white/5 text-stone-400 hover:text-white px-3 py-1.5 border border-white/10 transition-all font-serif rounded-sm"
+            >
+              <Share2 className="w-3 h-3" /> Share
+            </button>
+          )}
+
           {/* New Chapter */}
-          <button
-            onClick={() => setShowNewChapter(v => !v)}
-            className="flex items-center gap-1.5 text-xs bg-white/5 text-stone-400 hover:text-white px-3 py-1.5 border border-white/10 transition-all font-serif rounded-sm"
-          >
-            <Plus className="w-3 h-3" /> New Chapter
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => setShowNewChapter(v => !v)}
+              className="flex items-center gap-1.5 text-xs bg-white/5 text-stone-400 hover:text-white px-3 py-1.5 border border-white/10 transition-all font-serif rounded-sm"
+            >
+              <Plus className="w-3 h-3" /> New Chapter
+            </button>
+          )}
         </div>
       </div>
 
@@ -250,7 +287,7 @@ const BookPage = () => {
                           })}
                         </div>
 
-                        {!showNewPage && (
+                        {!showNewPage && isOwner && (
                           <button
                             onClick={(e) => { e.stopPropagation(); setShowNewPage(chapter._id); setNewPageTitle(''); }}
                             className="flex items-center gap-1.5 text-[10px] text-stone-500 hover:text-indigo-400 py-1 px-2 transition-colors w-full text-left border border-dashed border-white/5 hover:border-indigo-500/30 rounded-sm"
@@ -338,7 +375,7 @@ const BookPage = () => {
               <p className="text-stone-600 font-serif italic text-sm mb-6">
                 Click <strong>Add new page</strong> under the active chapter in the sidebar,<br/>or click below.
               </p>
-              {activeChapterId && (
+              {activeChapterId && isOwner && (
                 <button
                   onClick={() => { setShowNewPage(activeChapterId); setNewPageTitle(''); }}
                   className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-sm font-serif transition-colors mx-auto"
@@ -356,12 +393,73 @@ const BookPage = () => {
               rightPage={pages[currentIndex + 1]}
               onNext={goNext}
               onPrev={goPrev}
-              onSave={handleSaveContent}
+              onSave={isOwner ? handleSaveContent : undefined}
               pageCount={pageCount}
+              readOnly={!isOwner}
             />
           )}
         </div>
       </div>
+
+      {/* ── Share Modal ── */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl overflow-hidden font-serif">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-indigo-400" /> Share your work
+              </h3>
+              <button onClick={() => setShowShareModal(false)} className="text-stone-500 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/5">
+                <div className="flex items-center gap-3">
+                  {book?.isPublic ? <Globe className="w-5 h-5 text-emerald-400" /> : <Lock className="w-5 h-5 text-stone-500" />}
+                  <div>
+                    <p className="text-sm font-bold text-white">{book?.isPublic ? 'Publicly Shared' : 'Private Book'}</p>
+                    <p className="text-xs text-stone-500">{book?.isPublic ? 'Anyone with the link can view.' : 'Only you can see this.'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={togglePrivacy}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    book?.isPublic 
+                      ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20' 
+                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                  }`}
+                >
+                  {book?.isPublic ? 'Make Private' : 'Go Public'}
+                </button>
+              </div>
+
+              {book?.isPublic && (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-stone-500 uppercase tracking-widest">Share Link</p>
+                  <div className="flex gap-2">
+                    <input 
+                      readOnly 
+                      value={window.location.href}
+                      className="flex-1 bg-black/40 border border-white/10 rounded px-3 py-2 text-sm text-stone-300 outline-none"
+                    />
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        showToast('Link copied to clipboard!', 'success');
+                      }}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded transition-colors"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

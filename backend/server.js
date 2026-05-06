@@ -17,7 +17,9 @@ const statsRoutes = require('./routes/statsRoutes');
 const app = express();
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
 app.use(compression());
 app.use(express.json({ limit: '50mb' })); // Increased limit for base64 image uploads
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -31,7 +33,12 @@ app.use('/api/', limiter);
 
 // CORS Configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
