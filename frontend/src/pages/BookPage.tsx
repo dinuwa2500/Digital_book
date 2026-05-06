@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { showToast } from '../utils/alerts';
-import Swal from 'sweetalert2';
+
 
 const BookPage = () => {
   const { id } = useParams();
