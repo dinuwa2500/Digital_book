@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Bookmark, Save, List, Pencil } from 'lucide-react';
+import { Bookmark, Save, List, Pencil, AlignCenter } from 'lucide-react';
 import api from '../../services/api';
 import DrawingCanvas from './DrawingCanvas';
 
@@ -144,6 +144,66 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
     });
   };
 
+  // ── Center Text Logic ──────────────────────────────────────────
+  // Pads the current line(s) with spaces to appear centered.
+  const centerLines = () => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+
+    const { selectionStart, selectionEnd } = ta;
+    const lines = content.split('\n');
+
+    // Find which line numbers the selection spans
+    let charCount = 0;
+    let startLine = 0;
+    let endLine = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const lineLen = lines[i].length + 1; // +1 for '\n'
+      if (charCount <= selectionStart) startLine = i;
+      if (charCount + lineLen > selectionEnd) { endLine = i; break; }
+      if (i === lines.length - 1) endLine = i;
+      charCount += lineLen;
+    }
+
+    // Measure and center each line in selection
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    
+    const style = window.getComputedStyle(ta);
+    context.font = `${style.fontSize} ${style.fontFamily}`;
+    
+    const spaceWidth = context.measureText(' ').width;
+    const taWidth = ta.clientWidth - 64 - 12; // paddingLeft: 64, paddingRight: 12
+
+    const newLines = lines.map((line, idx) => {
+      if (idx < startLine || idx > endLine) return line;
+      
+      const trimmedLine = line.trim();
+      if (!trimmedLine) return '';
+
+      const textWidth = context.measureText(trimmedLine).width;
+      const availableSpace = taWidth - textWidth;
+
+      if (availableSpace <= 0) return trimmedLine;
+
+      const spacesNeeded = Math.floor((availableSpace / 2) / spaceWidth);
+      return ' '.repeat(spacesNeeded) + trimmedLine;
+    });
+
+    const newContent = newLines.join('\n');
+    setContent(newContent);
+    setIsDirty(true);
+
+    requestAnimationFrame(() => {
+      ta.focus();
+      // Keep selection or just move to start? 
+      // For now, let's just keep the focus.
+      ta.setSelectionRange(selectionStart, selectionStart);
+    });
+  };
+
   // ── Paste Logic for Images ──────────────────────────────────────
   const handlePaste = (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
@@ -224,21 +284,37 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
 
         {/* ── Bullet Point button ── */}
         {!readOnly && (
-          <button
-            onMouseDown={e => {
-              // prevent textarea from losing focus before we read selection
-              e.preventDefault();
-              addBulletPoints();
-            }}
-            title="Add bullet point to selected line(s)"
-            className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-stone-700 border border-stone-200 hover:border-stone-400 rounded px-1.5 py-0.5 transition-colors"
-            style={{ fontSize: 11 }}
-          >
-            <List className="w-3 h-3" />
-            <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
-              Bullet
-            </span>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onMouseDown={e => {
+                e.preventDefault();
+                addBulletPoints();
+              }}
+              title="Add bullet point to selected line(s)"
+              className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-stone-700 border border-stone-200 hover:border-stone-400 rounded px-1.5 py-0.5 transition-colors"
+              style={{ fontSize: 11 }}
+            >
+              <List className="w-3 h-3" />
+              <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
+                Bullet
+              </span>
+            </button>
+
+            <button
+              onMouseDown={e => {
+                e.preventDefault();
+                centerLines();
+              }}
+              title="Center the selected line(s)"
+              className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-stone-700 border border-stone-200 hover:border-stone-400 rounded px-1.5 py-0.5 transition-colors"
+              style={{ fontSize: 11 }}
+            >
+              <AlignCenter className="w-3 h-3" />
+              <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
+                Center
+              </span>
+            </button>
+          </div>
         )}
 
         {/* ── Virtual Pen button ── */}
