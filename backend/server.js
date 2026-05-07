@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const errorHandler = require('./middleware/error');
+const { inject } = require('@vercel/analytics');
 
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
@@ -15,6 +16,9 @@ const pageRoutes = require('./routes/pageRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
+
+// Initialize Vercel Analytics
+inject();
 
 // Security Middleware
 app.use(helmet({
