@@ -11,6 +11,9 @@ interface BookViewerProps {
   onSave?: (pageId: string, content: string, date: string, fontColor: string, images: any[], tables: any[]) => void;
   pageCount?: number; 
   readOnly?: boolean;
+  leftRef?: React.RefObject<any>;
+  rightRef?: React.RefObject<any>;
+  onPageFocus?: (side: 'left' | 'right') => void;
 }
 
 const LINE_HEIGHT = 32; // px — must match PageEditor.tsx & CSS --line-height
@@ -23,6 +26,9 @@ const BookViewer: React.FC<BookViewerProps> = ({
   onSave,
   pageCount = 80,
   readOnly = false,
+  leftRef,
+  rightRef,
+  onPageFocus
 }) => {
   // 1 date-header row + pageCount writing lines + 1 footer row
   const bookHeightPx = (pageCount + 2) * LINE_HEIGHT;
@@ -54,9 +60,11 @@ const BookViewer: React.FC<BookViewerProps> = ({
             {leftPage ? (
               <div className="flex-1 overflow-hidden h-full relative z-20 flex flex-col px-3 pt-2 pb-1">
                 <PageEditor
+                  ref={leftRef}
                   page={leftPage}
                   onSave={(content, date, fontColor, images, tables) => onSave?.(leftPage._id, content, date, fontColor, images, tables)}
                   readOnly={readOnly}
+                  onFocus={() => onPageFocus?.('left')}
                 />
               </div>
             ) : (
@@ -87,9 +95,11 @@ const BookViewer: React.FC<BookViewerProps> = ({
             {rightPage ? (
               <div className="flex-1 overflow-hidden h-full relative z-20 flex flex-col px-3 pt-2 pb-1">
                 <PageEditor
+                  ref={rightRef}
                   page={rightPage}
                   onSave={(content, date, fontColor, images, tables) => onSave?.(rightPage._id, content, date, fontColor, images, tables)}
                   readOnly={readOnly}
+                  onFocus={() => onPageFocus?.('right')}
                 />
               </div>
             ) : (

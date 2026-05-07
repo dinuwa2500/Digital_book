@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import BookViewer from '../components/Book/BookViewer';
 import {
   ChevronLeft, Plus, List, Moon, Sun, Loader2,
   BookOpen, FileText, ChevronRight, Share2, Globe, Lock,
-  X
+  X, AlignCenter, Pencil, Table as TableIcon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { showToast } from '../utils/alerts';
@@ -26,6 +26,11 @@ const BookPage = () => {
   const { user } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [focusedSide, setFocusedSide] = useState<'left' | 'right'>('left');
+  const leftPageRef = useRef<any>(null);
+  const rightPageRef = useRef<any>(null);
+
+  const getActiveRef = () => focusedSide === 'left' ? leftPageRef : rightPageRef;
 
   // Inline creation state
   const [newChapterTitle, setNewChapterTitle] = useState('');
@@ -156,10 +161,63 @@ const BookPage = () => {
 
       {/* ── Top Bar ── */}
       <div className="h-14 bg-[#1a1a1a] dark:bg-[#0a0a0a] border-b border-white/5 flex items-center justify-between px-5 shrink-0">
-        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors font-serif italic text-sm">
-          <ChevronLeft className="w-4 h-4" /> Return to Study
-        </button>
+        
+        {/* Left Side: Navigation */}
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors font-serif italic text-sm">
+            <ChevronLeft className="w-4 h-4" /> Return to Study
+          </button>
+        </div>
 
+        {/* Center Section: Main Tools (only if owner) */}
+        {isOwner && (
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-lg px-2 py-1 shadow-inner">
+            <div className="flex items-center gap-1 pr-3 border-r border-white/10">
+              <button
+                onClick={() => getActiveRef().current?.addBulletPoints()}
+                title="Bullet Points"
+                className="p-2 text-stone-400 hover:text-indigo-400 hover:bg-white/5 rounded transition-all"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => getActiveRef().current?.centerLines()}
+                title="Center Text"
+                className="p-2 text-stone-400 hover:text-indigo-400 hover:bg-white/5 rounded transition-all"
+              >
+                <AlignCenter className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => getActiveRef().current?.addTable()}
+                title="Insert Table"
+                className="p-2 text-stone-400 hover:text-emerald-400 hover:bg-white/5 rounded transition-all"
+              >
+                <TableIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => getActiveRef().current?.openPen()}
+                title="Virtual Pen"
+                className="p-2 text-stone-400 hover:text-indigo-400 hover:bg-white/5 rounded transition-all"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2 pl-3">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded text-[9px] uppercase tracking-widest text-indigo-400 font-bold">
+                <span className={`w-1.5 h-1.5 rounded-full ${focusedSide === 'left' ? 'bg-indigo-400 animate-pulse' : 'bg-stone-600'}`} />
+                L
+              </div>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded text-[9px] uppercase tracking-widest text-indigo-400 font-bold">
+                <span className={`w-1.5 h-1.5 rounded-full ${focusedSide === 'right' ? 'bg-indigo-400 animate-pulse' : 'bg-stone-600'}`} />
+                R
+              </div>
+              <span className="text-[10px] text-stone-500 font-serif italic ml-1">Editing Mode</span>
+            </div>
+          </div>
+        )}
+
+        {/* Right Side: Global Controls */}
         <div className="flex items-center gap-4">
           {/* Page count selector */}
           <select
@@ -396,6 +454,9 @@ const BookPage = () => {
               onSave={isOwner ? handleSaveContent : undefined}
               pageCount={pageCount}
               readOnly={!isOwner}
+              leftRef={leftPageRef}
+              rightRef={rightPageRef}
+              onPageFocus={(side) => setFocusedSide(side)}
             />
           )}
         </div>

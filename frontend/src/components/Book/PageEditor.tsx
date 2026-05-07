@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
 import { Bookmark, Save, List, Pencil, AlignCenter, Table as TableIcon, Plus, Trash2 } from 'lucide-react';
 import api from '../../services/api';
@@ -10,11 +10,13 @@ interface PageEditorProps {
   page: any;
   onSave?: (content: string, date: string, fontColor: string, images: any[], tables: any[]) => void;
   readOnly?: boolean;
+  onFocus?: () => void;
 }
 
 const LINE_HEIGHT = 32; // px — must match CSS background-size and BookViewer.tsx
 
-const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false }) => {
+const PageEditor = forwardRef<any, PageEditorProps>((props, ref) => {
+  const { page, onSave, readOnly = false, onFocus } = props;
   const [content, setContent] = useState(page.content || '');
   const [date, setDate] = useState(page.date || '');
   const [fontColor, setFontColor] = useState(page.fontColor || '#111111');
@@ -36,6 +38,13 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    addBulletPoints,
+    centerLines,
+    addTable,
+    openPen: () => setIsDrawing(true)
+  }));
 
   // Reset when navigating to a different page
   useEffect(() => {
@@ -358,71 +367,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
           <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
         </button>
 
-        {/* ── Bullet Point button ── */}
-        {!readOnly && (
-          <div className="flex items-center gap-1">
-            <button
-              onMouseDown={e => {
-                e.preventDefault();
-                addBulletPoints();
-              }}
-              title="Add bullet point to selected line(s)"
-              className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-stone-700 border border-stone-200 hover:border-stone-400 rounded px-1.5 py-0.5 transition-colors"
-              style={{ fontSize: 11 }}
-            >
-              <List className="w-3 h-3" />
-              <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
-                Bullet
-              </span>
-            </button>
-
-            <button
-              onMouseDown={e => {
-                e.preventDefault();
-                centerLines();
-              }}
-              title="Center the selected line(s)"
-              className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-stone-700 border border-stone-200 hover:border-stone-400 rounded px-1.5 py-0.5 transition-colors"
-              style={{ fontSize: 11 }}
-            >
-              <AlignCenter className="w-3 h-3" />
-              <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
-                Center
-              </span>
-            </button>
-
-            {/* ── Table button ── */}
-            {!readOnly && (
-              <button
-                onClick={addTable}
-                title="Insert a table"
-                className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-emerald-600 border border-stone-200 hover:border-emerald-200 rounded px-1.5 py-0.5 transition-colors"
-                style={{ fontSize: 11 }}
-              >
-                <TableIcon className="w-3 h-3" />
-                <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
-                  Table
-                </span>
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* ── Virtual Pen button ── */}
-        {!readOnly && (
-          <button
-            onClick={() => setIsDrawing(true)}
-            title="Open virtual pen to draw or write"
-            className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-indigo-600 border border-stone-200 hover:border-indigo-200 rounded px-1.5 py-0.5 transition-colors"
-            style={{ fontSize: 11 }}
-          >
-            <Pencil className="w-3 h-3" />
-            <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
-              Pen
-            </span>
-          </button>
-        )}
-
         {/* Divider */}
         <span className="text-stone-200 shrink-0 text-xs">|</span>
 
@@ -496,6 +440,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
           onBlur={handleSave}
           onPaste={readOnly ? undefined : handlePaste}
           onClick={readOnly ? undefined : handleEditorClick}
+          onFocus={onFocus}
           readOnly={readOnly}
           placeholder={readOnly ? "" : "Start writing or paste an image…"}
           spellCheck={false}
@@ -793,6 +738,6 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
       )}
     </div>
   );
-};
+});
 
 export default PageEditor;
