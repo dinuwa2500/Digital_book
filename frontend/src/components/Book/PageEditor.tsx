@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Bookmark, Save, List, Pencil, AlignCenter } from 'lucide-react';
+import { Bookmark, Save, List, Pencil, AlignCenter, Table as TableIcon, Plus, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import DrawingCanvas from './DrawingCanvas';
 
@@ -8,7 +8,7 @@ import DrawingCanvas from './DrawingCanvas';
 
 interface PageEditorProps {
   page: any;
-  onSave?: (content: string, date: string, fontColor: string, images: any[]) => void;
+  onSave?: (content: string, date: string, fontColor: string, images: any[], tables: any[]) => void;
   readOnly?: boolean;
 }
 
@@ -23,6 +23,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(page.isBookmarked || false);
   const [images, setImages] = useState<any[]>(page.images || []);
+  const [tables, setTables] = useState<any[]>(page.tables || []);
   const [isDrawing, setIsDrawing] = useState(false);
   
   // Track original state to prevent unnecessary saves
@@ -30,7 +31,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
     content: page.content || '',
     date: page.date || '',
     fontColor: page.fontColor || '#111111',
-    images: page.images || []
+    images: page.images || [],
+    tables: page.tables || []
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -42,13 +44,15 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
     setFontColor(page.fontColor || '#111111');
     setIsBookmarked(page.isBookmarked || false);
     setImages(page.images || []);
+    setTables(page.tables || []);
     setIsDirty(false);
     setSavedFeedback(false);
     setOriginalState({
       content: page.content || '',
       date: page.date || '',
       fontColor: page.fontColor || '#111111',
-      images: page.images || []
+      images: page.images || [],
+      tables: page.tables || []
     });
   }, [page._id]);
 
@@ -57,7 +61,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
     if (!isDirty) return;
     const timer = setTimeout(() => handleSave(), 8000);
     return () => clearTimeout(timer);
-  }, [content, date, fontColor, images, isDirty]);
+  }, [content, date, fontColor, images, tables, isDirty]);
 
   const handleSave = async () => {
     if (!isDirty || saving) return;
@@ -67,7 +71,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
       content === originalState.content &&
       date === originalState.date &&
       fontColor === originalState.fontColor &&
-      JSON.stringify(images) === JSON.stringify(originalState.images)
+      JSON.stringify(images) === JSON.stringify(originalState.images) &&
+      JSON.stringify(tables) === JSON.stringify(originalState.tables)
     ) {
       setIsDirty(false);
       return;
@@ -75,8 +80,8 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
 
     setSaving(true);
     try {
-      await onSave(content, date, fontColor, images);
-      setOriginalState({ content, date, fontColor, images });
+      await onSave(content, date, fontColor, images, tables);
+      setOriginalState({ content, date, fontColor, images, tables });
       setIsDirty(false);
       setSavedFeedback(true);
       setTimeout(() => setSavedFeedback(false), 2000);
@@ -262,6 +267,77 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
     }
   };
 
+  // ── Table Logic ────────────────────────────────────────────────
+  const addTable = () => {
+    const newTable = {
+      id: Date.now().toString() + Math.random().toString(36).substring(7),
+      x: 64, // Start after the margin
+      y: 100,
+      width: 400,
+      height: 100,
+      rows: 2,
+      cols: 2,
+      data: [['', ''], ['', '']] // Initial 2x2 empty table
+    };
+    setTables(prev => {
+      const updated = [...prev, newTable];
+      setIsDirty(true);
+      return updated;
+    });
+  };
+
+  const updateTableCell = (tableId: string, rowIndex: number, colIndex: number, value: string) => {
+    setTables(prev => {
+      const updated = prev.map(t => {
+        if (t.id === tableId) {
+          const newData = [...t.data];
+          newData[rowIndex] = [...newData[rowIndex]];
+          newData[rowIndex][colIndex] = value;
+          return { ...t, data: newData };
+        }
+        return t;
+      });
+      setIsDirty(true);
+      return updated;
+    });
+  };
+
+  const deleteTable = (tableId: string) => {
+    setTables(prev => {
+      const updated = prev.filter(t => t.id !== tableId);
+      setIsDirty(true);
+      return updated;
+    });
+  };
+
+  const addRow = (tableId: string) => {
+    setTables(prev => {
+      const updated = prev.map(t => {
+        if (t.id === tableId) {
+          const newRow = Array(t.cols).fill('');
+          return { ...t, rows: t.rows + 1, data: [...t.data, newRow] };
+        }
+        return t;
+      });
+      setIsDirty(true);
+      return updated;
+    });
+  };
+
+  const addCol = (tableId: string) => {
+    setTables(prev => {
+      const updated = prev.map(t => {
+        if (t.id === tableId) {
+          const newData = t.data.map((row: string[]) => [...row, '']);
+          return { ...t, cols: t.cols + 1, data: newData };
+        }
+        return t;
+      });
+      setIsDirty(true);
+      return updated;
+    });
+  };
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
 
@@ -314,6 +390,21 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
                 Center
               </span>
             </button>
+
+            {/* ── Table button ── */}
+            {!readOnly && (
+              <button
+                onClick={addTable}
+                title="Insert a table"
+                className="shrink-0 flex items-center gap-1 text-stone-400 hover:text-emerald-600 border border-stone-200 hover:border-emerald-200 rounded px-1.5 py-0.5 transition-colors"
+                style={{ fontSize: 11 }}
+              >
+                <TableIcon className="w-3 h-3" />
+                <span className="font-serif" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
+                  Table
+                </span>
+              </button>
+            )}
           </div>
         )}
 
@@ -523,6 +614,134 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onSave, readOnly = false 
               >
                 ×
               </button>
+            )}
+          </div>
+        ))}
+
+        {/* ── Tables Layer ── */}
+        {tables.map((table, tIdx) => (
+          <div
+            key={table.id}
+            style={{
+              position: 'absolute',
+              left: table.x || 64,
+              top: table.y || 100,
+              width: table.width || 400,
+              zIndex: 60,
+            }}
+            className={`group bg-white/80 backdrop-blur-[2px] border border-stone-300 rounded shadow-sm ${readOnly ? '' : 'hover:shadow-md transition-shadow'}`}
+          >
+            {/* Table Header/Controls */}
+            {!readOnly && (
+              <div className="flex items-center justify-between bg-stone-100 px-2 py-1 rounded-t border-b border-stone-200 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="cursor-move p-0.5 text-stone-400 hover:text-stone-600"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      const startX = e.clientX;
+                      const startY = e.clientY;
+                      const originalX = table.x || 64;
+                      const originalY = table.y || 100;
+
+                      const onPointerMove = (moveEvent: PointerEvent) => {
+                        setTables(prev => {
+                          const next = [...prev];
+                          next[tIdx] = { 
+                            ...next[tIdx], 
+                            x: originalX + (moveEvent.clientX - startX), 
+                            y: originalY + (moveEvent.clientY - startY) 
+                          };
+                          return next;
+                        });
+                        setIsDirty(true);
+                      };
+
+                      const onPointerUp = () => {
+                        window.removeEventListener('pointermove', onPointerMove);
+                        window.removeEventListener('pointerup', onPointerUp);
+                        handleSave();
+                      };
+
+                      window.addEventListener('pointermove', onPointerMove);
+                      window.addEventListener('pointerup', onPointerUp);
+                    }}
+                  >
+                    <div className="w-3 h-3 grid grid-cols-2 gap-0.5">
+                       <div className="bg-current rounded-full" />
+                       <div className="bg-current rounded-full" />
+                       <div className="bg-current rounded-full" />
+                       <div className="bg-current rounded-full" />
+                    </div>
+                  </div>
+                  <button onClick={() => addRow(table.id)} title="Add row" className="p-0.5 text-stone-400 hover:text-emerald-600">
+                    <Plus className="w-3 h-3" />
+                  </button>
+                  <button onClick={() => addCol(table.id)} title="Add column" className="p-0.5 text-stone-400 hover:text-emerald-600">
+                    <TableIcon className="w-3 h-3" />
+                  </button>
+                </div>
+                <button onClick={() => deleteTable(table.id)} title="Delete table" className="p-0.5 text-stone-400 hover:text-red-600">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            <table className="w-full border-collapse">
+              <tbody>
+                {table.data.map((row: string[], rIdx: number) => (
+                  <tr key={rIdx}>
+                    {row.map((cell: string, cIdx: number) => (
+                      <td key={cIdx} className="border border-stone-300 p-0">
+                        <input
+                          type="text"
+                          value={cell}
+                          onChange={(e) => updateTableCell(table.id, rIdx, cIdx, e.target.value)}
+                          onBlur={handleSave}
+                          readOnly={readOnly}
+                          className="w-full h-full bg-transparent outline-none px-2 py-1 text-sm font-serif min-h-[24px]"
+                          style={{ color: fontColor }}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Resize handle */}
+            {!readOnly && (
+              <div 
+                className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize opacity-0 group-hover:opacity-100"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  const startX = e.clientX;
+                  const startWidth = table.width || 400;
+
+                  const onPointerMove = (moveEvent: PointerEvent) => {
+                    setTables(prev => {
+                      const next = [...prev];
+                      next[tIdx] = { 
+                        ...next[tIdx], 
+                        width: Math.max(100, startWidth + (moveEvent.clientX - startX))
+                      };
+                      return next;
+                    });
+                    setIsDirty(true);
+                  };
+
+                  const onPointerUp = () => {
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    handleSave();
+                  };
+
+                  window.addEventListener('pointermove', onPointerMove);
+                  window.addEventListener('pointerup', onPointerUp);
+                }}
+              >
+                <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-stone-400 rounded-sm" />
+              </div>
             )}
           </div>
         ))}

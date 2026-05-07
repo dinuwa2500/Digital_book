@@ -15,6 +15,16 @@ const pageSchema = new mongoose.Schema({
     width: Number,
     height: Number
   }],
+  tables: [{
+    id: String,
+    x: Number,
+    y: Number,
+    width: Number,
+    height: Number,
+    rows: Number,
+    cols: Number,
+    data: [[String]] // 2D array of strings for cell content
+  }],
   lastSavedAt: { type: Date, default: Date.now }
 });
 
