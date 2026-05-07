@@ -54,6 +54,17 @@ const PageEditor = forwardRef<any, PageEditorProps>((props, ref) => {
   });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-resize textarea to fit content
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = "0px"; // Reset height to calculate scrollHeight correctly
+      const scrollHeight = ta.scrollHeight;
+      ta.style.height = Math.max(scrollHeight, 400) + "px";
+    }
+  }, [content]);
 
   useImperativeHandle(ref, () => ({
     addBulletPoints,
@@ -79,6 +90,11 @@ const PageEditor = forwardRef<any, PageEditorProps>((props, ref) => {
       images: page.images || [],
       tables: page.tables || [],
     });
+    
+    // Reset scroll
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
   }, [page._id]);
 
   // Auto-save: 8 seconds after last keystroke
@@ -276,7 +292,7 @@ const PageEditor = forwardRef<any, PageEditorProps>((props, ref) => {
   const handleEditorClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     const ta = e.currentTarget;
     const rect = ta.getBoundingClientRect();
-    const clickY = e.clientY - rect.top + ta.scrollTop;
+    const clickY = e.clientY - rect.top + (scrollContainerRef.current?.scrollTop || 0);
 
     const paddingTop = 5; // Matches the textarea style.paddingTop
     const targetLineIndex = Math.floor((clickY - paddingTop) / LINE_HEIGHT);
@@ -301,10 +317,11 @@ const PageEditor = forwardRef<any, PageEditorProps>((props, ref) => {
 
   // ── Table Logic ────────────────────────────────────────────────
   const addTable = () => {
+    const scrollTop = scrollContainerRef.current?.scrollTop || 0;
     const newTable = {
       id: Date.now().toString() + Math.random().toString(36).substring(7),
       x: 64, // Start after the margin
-      y: 100,
+      y: 100 + scrollTop,
       width: 400,
       height: 100,
       rows: 2,
@@ -470,9 +487,10 @@ const PageEditor = forwardRef<any, PageEditorProps>((props, ref) => {
         </div>
       </div>
 
-      {/* ── Writing area: paper-texture applied here so lines start at y=0 ── */}
+      {/* ── Writing area ── */}
       <div
-        className='flex-1 relative overflow-hidden paper-texture'
+        ref={scrollContainerRef}
+        className='flex-1 relative overflow-y-auto overflow-x-hidden paper-texture'
         style={{ minHeight: 0 }}
       >
         <textarea
@@ -497,14 +515,15 @@ const PageEditor = forwardRef<any, PageEditorProps>((props, ref) => {
             fontFamily: '"Georgia", "Times New Roman", serif',
             color: fontColor,
             caretColor: readOnly ? "transparent" : fontColor,
-            paddingTop: 5, // nudges baseline just above the rule
-            paddingLeft: 64, // indent past the red margin line (at 55px)
+            paddingTop: 5,
+            paddingLeft: 64,
             paddingRight: 12,
-            paddingBottom: 0,
+            paddingBottom: 40, // some extra space at bottom
             boxSizing: "border-box",
             cursor: readOnly ? "default" : "text",
+            minHeight: "100%",
           }}
-          className='absolute inset-0 w-full h-full bg-transparent resize-none outline-none placeholder:text-stone-300/50 z-0'
+          className='relative w-full bg-transparent resize-none outline-none placeholder:text-stone-300/50 z-0 overflow-hidden block'
         />
 
         {/* ── Images Layer ── */}

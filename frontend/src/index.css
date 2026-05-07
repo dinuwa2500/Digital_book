@@ -36,6 +36,7 @@ body {
   /* Start lines at y=0 of this div — textarea also starts at y=0 */
   background-position: 0 0;
   background-repeat: repeat-y, no-repeat;
+  background-attachment: local;
   position: relative;
   transition: background-color 0.3s ease;
 }
