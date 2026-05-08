@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -62,6 +63,7 @@ function App() {
           <Route path="/stats" element={<VisitorStats />} />
         </Routes>
         <CookieConsent />
+        <SpeedInsights />
       </AuthProvider>
     </Router>
   );
