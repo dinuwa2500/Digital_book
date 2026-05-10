@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import Adsterra from '../components/Ads/Adsterra';
 
 const Dashboard = () => {
   const [books, setBooks] = useState([]);
@@ -86,6 +87,11 @@ const Dashboard = () => {
           </div>
         </header>
 
+        {/* Top Ad Unit - 728x90 */}
+        <div className="mb-12">
+          <Adsterra id="29308150" format="728x90" />
+        </div>
+
         {/* Bookshelf */}
         <div className="relative pb-8">
           {books.length === 0 ? (
@@ -138,6 +144,11 @@ const Dashboard = () => {
               <div className="absolute -bottom-8 left-0 right-0 h-2 bg-black/40 blur-sm" />
             </>
           )}
+        </div>
+
+        {/* Footer Ad Unit - 320x50 */}
+        <div className="mt-20">
+          <Adsterra id="29308149" format="320x50" />
         </div>
       </div>
     </div>

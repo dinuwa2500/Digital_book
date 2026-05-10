@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { showToast } from '../utils/alerts';
+import Adsterra from '../components/Ads/Adsterra';
 
 
 const BookPage = () => {
@@ -437,6 +438,11 @@ const BookPage = () => {
               </button>
             </div>
           )}
+
+          {/* Sidebar Ad Unit - 300x250 */}
+          <div className="mt-auto border-t border-white/5 p-2 bg-black/20">
+            <Adsterra id="29308145" format="300x250" className="scale-75 origin-top mb-0" />
+          </div>
         </div>
 
         {/* ── Main Book Area ── */}

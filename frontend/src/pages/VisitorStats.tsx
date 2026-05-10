@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { Users, Shield, Clock, ArrowLeft, Globe, MapPin } from 'lucide-react';
+import { Users, Shield, Clock, ArrowLeft, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Adsterra from '../components/Ads/Adsterra';
 
 const VisitorStats = () => {
   const [count, setCount] = useState<number | null>(null);
@@ -190,6 +191,7 @@ const VisitorStats = () => {
         </div>
 
         <div className="mt-12 text-center">
+          <Adsterra id="29308150" format="728x90" className="mb-8" />
           <p className="text-[10px] text-stone-700 uppercase tracking-[0.5em] mb-4">
             Secured and Encrypted by Archive Sentinel v2.4
           </p>

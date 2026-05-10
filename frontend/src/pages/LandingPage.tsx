@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Edit3, Shield, Zap, ChevronRight } from 'lucide-react';
+import Adsterra from '../components/Ads/Adsterra';
 
 const LandingPage = () => {
   useEffect(() => {
@@ -9,6 +10,9 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#1c1917] text-stone-300 font-serif overflow-x-hidden">
+      {/* Top Ad Unit - 728x90 */}
+      <Adsterra id="29308150" format="728x90" className="bg-black/20 py-2 border-b border-white/5" />
+
       {/* Navigation */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8 flex justify-between items-center border-b border-white/5">
         <div className="flex items-center gap-2">
@@ -54,6 +58,11 @@ const LandingPage = () => {
         </div>
       </header>
 
+      {/* In-content Ad Unit - Native */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <Adsterra id="29308151" format="native" />
+      </div>
+
       {/* Feature Section */}
       <section className="bg-stone-900 py-16 sm:py-32 border-y border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-16">
@@ -85,6 +94,11 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Pre-footer Ad Unit - 468x60 */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <Adsterra id="29308148" format="468x60" />
+      </div>
+
       {/* Footer */}
       <footer className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-white/5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-10 sm:mb-16">
@@ -93,10 +107,20 @@ const LandingPage = () => {
               <Book className="w-5 h-5 text-stone-100" />
               <span className="text-base sm:text-lg text-white italic">Digital Exercise Book</span>
             </div>
-            <p className="text-sm text-stone-500 max-w-sm">
+            <p className="text-sm text-stone-500 max-w-sm mb-6">
               The premier digital workspace for academic and personal growth. 
               Built with love for the scholars of the future.
             </p>
+            
+            {/* Smartlink Support Button */}
+            <a 
+              href="https://highperformanceformat.com/29308153" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded text-xs text-stone-400 hover:text-white hover:bg-white/10 transition-all font-serif italic"
+            >
+              <Zap className="w-3 h-3 text-yellow-500" /> Support the Library
+            </a>
           </div>
           <div>
             <h4 className="text-white text-xs uppercase tracking-widest mb-4 sm:mb-6 font-bold">Platform</h4>
