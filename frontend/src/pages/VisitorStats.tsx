@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Users, Shield, Clock, ArrowLeft } from 'lucide-react';
+import { Users, Shield, Clock, ArrowLeft, Globe, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const VisitorStats = () => {
   const [count, setCount] = useState<number | null>(null);
+  const [countries, setCountries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessKey, setAccessKey] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -18,18 +19,23 @@ const VisitorStats = () => {
     e.preventDefault();
     if (accessKey === SECRET_KEY) {
       setIsAuthorized(true);
-      fetchCount();
+      fetchAllStats();
     } else {
       setError('Invalid Access Key');
       setAccessKey('');
     }
   };
 
-  const fetchCount = async () => {
+  const fetchAllStats = async () => {
+    setLoading(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const res = await axios.get(`${apiUrl}/stats/count`);
-      setCount(res.data.uniqueVisitors);
+      const [countRes, countryRes] = await Promise.all([
+        axios.get(`${apiUrl}/stats/count`),
+        axios.get(`${apiUrl}/stats/countries`)
+      ]);
+      setCount(countRes.data.uniqueVisitors);
+      setCountries(countryRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -83,63 +89,130 @@ const VisitorStats = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6 font-serif">
-      <div className="max-w-md w-full bg-[#1a1a1a] border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 blur-[100px] rounded-full" />
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-emerald-500/10 blur-[100px] rounded-full" />
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
-              <Shield className="w-6 h-6 text-indigo-400" />
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center py-12 px-6 font-serif">
+      <div className="max-w-2xl w-full">
+        
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+              <Shield className="w-8 h-8 text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">System Archive</h1>
-              <p className="text-xs text-stone-500 uppercase tracking-widest">Internal Access Only</p>
+              <h1 className="text-3xl font-bold tracking-tight text-white">System Analytics</h1>
+              <p className="text-xs text-stone-500 uppercase tracking-[0.3em] font-bold">Encrypted Archive Access</p>
             </div>
           </div>
-
-          <div className="space-y-6">
-            <div className="bg-black/40 border border-white/5 rounded-xl p-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <Users className="w-5 h-5 text-emerald-400" />
-                </div>
-                <span className="text-stone-400">Unique Visitors</span>
-              </div>
-              <div className="text-3xl font-bold font-mono text-emerald-400">
-                {loading ? '...' : count}
-              </div>
-            </div>
-
-            <div className="bg-black/40 border border-white/5 rounded-xl p-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-indigo-500/10 rounded-lg">
-                  <Clock className="w-5 h-5 text-indigo-400" />
-                </div>
-                <span className="text-stone-400">Last Updated</span>
-              </div>
-              <div className="text-sm font-mono text-stone-400">
-                {new Date().toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
-
           <button 
             onClick={() => navigate('/dashboard')}
-            className="mt-10 w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-sm text-stone-300 hover:text-white"
+            className="flex items-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all text-sm text-stone-400 hover:text-white"
           >
-            <ArrowLeft className="w-4 h-4" /> Return to Dashboard
+            <ArrowLeft className="w-4 h-4" /> Dashboard
           </button>
         </div>
+
+        {/* Main Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div className="bg-[#111] border border-white/5 rounded-2xl p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Users className="w-24 h-24 text-white" />
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <Users className="w-5 h-5 text-emerald-400" />
+              </div>
+              <span className="text-stone-500 text-sm uppercase tracking-widest font-bold">Total Reach</span>
+            </div>
+            <div className="text-5xl font-bold font-mono text-white">
+              {loading ? '...' : count}
+              <span className="text-stone-700 text-sm ml-2 font-serif font-normal italic">Unique souls</span>
+            </div>
+          </div>
+
+          <div className="bg-[#111] border border-white/5 rounded-2xl p-8 relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Clock className="w-24 h-24 text-white" />
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-2 bg-indigo-500/10 rounded-lg">
+                <Clock className="w-5 h-5 text-indigo-400" />
+              </div>
+              <span className="text-stone-500 text-sm uppercase tracking-widest font-bold">Last Sync</span>
+            </div>
+            <div className="text-2xl font-bold font-mono text-white pt-2">
+              {new Date().toLocaleTimeString()}
+              <div className="text-stone-600 text-xs mt-1 font-serif font-normal italic uppercase tracking-widest">
+                Real-time Monitoring Active
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Geographic Breakdown */}
+        <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="px-8 py-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Globe className="w-5 h-5 text-indigo-400" />
+              <h2 className="text-lg font-bold">Global Presence</h2>
+            </div>
+            <span className="text-[10px] text-stone-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
+              Breakdown by Country
+            </span>
+          </div>
+          
+          <div className="p-4 sm:p-8">
+            {loading ? (
+              <div className="py-20 text-center text-stone-600 italic">Decrypting geographic data...</div>
+            ) : countries.length === 0 ? (
+              <div className="py-20 text-center text-stone-600 italic">No geographic data recorded yet.</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {countries.map((c, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-white/2 hover:bg-white/5 border border-white/5 rounded-xl transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 flex items-center justify-center bg-black/40 rounded-lg border border-white/5 text-lg shadow-inner group-hover:border-indigo-500/30 transition-colors">
+                        {getFlagEmoji(c.code)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-stone-200">{c._id}</p>
+                        <p className="text-[10px] text-stone-600 uppercase tracking-widest">{c.code}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-mono font-bold text-indigo-400">{c.count}</div>
+                      <div className="text-[9px] text-stone-600 uppercase tracking-widest">Visitors</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-12 text-center">
+          <p className="text-[10px] text-stone-700 uppercase tracking-[0.5em] mb-4">
+            Secured and Encrypted by Archive Sentinel v2.4
+          </p>
+          <div className="flex justify-center gap-4">
+             <div className="w-1 h-1 rounded-full bg-stone-800" />
+             <div className="w-1 h-1 rounded-full bg-stone-800" />
+             <div className="w-1 h-1 rounded-full bg-stone-800" />
+          </div>
+        </div>
+
       </div>
-      
-      <p className="mt-8 text-[10px] text-stone-600 uppercase tracking-[0.3em]">
-        Digital Book Analytics v1.0
-      </p>
     </div>
   );
 };
+
+// Helper for flag emojis
+function getFlagEmoji(countryCode: string) {
+  if (!countryCode || countryCode === '??' || countryCode === 'LH') return '🌐';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 
 export default VisitorStats;
