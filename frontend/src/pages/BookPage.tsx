@@ -441,7 +441,7 @@ const BookPage = () => {
 
           {/* Sidebar Ad Unit - 300x250 */}
           <div className="mt-auto border-t border-white/5 p-2 bg-black/20">
-            <Adsterra id="29308145" format="300x250" className="scale-75 origin-top mb-0" />
+            <Adsterra id="8450e8194e047262dd49a2d9852ec2ec" format="300x250" className="scale-75 origin-top mb-0" />
           </div>
         </div>
 

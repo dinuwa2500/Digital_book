@@ -1,14 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 
 interface AdsterraProps {
-  id: string;
+  id: string; // The hash key
   format?: '728x90' | '160x600' | '300x250' | '468x60' | '320x50' | '160x300' | 'native';
   className?: string;
 }
 
 /**
  * Adsterra Ad Widget
- * Handles banner and native formats using standard iframe-based scripts
+ * Supports Banner and Native formats with correct domain mapping
  */
 const Adsterra: React.FC<AdsterraProps> = ({ id, format = '728x90', className = '' }) => {
   const adRef = useRef<HTMLDivElement>(null);
@@ -19,25 +19,45 @@ const Adsterra: React.FC<AdsterraProps> = ({ id, format = '728x90', className = 
     adRef.current.innerHTML = '';
 
     const [width, height] = getDimensions(format);
+    const isNative = format === 'native';
 
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.innerHTML = `
-      atOptions = {
-        'key' : '${id}',
-        'format' : 'iframe',
-        'height' : ${height},
-        'width' : ${width},
-        'params' : {}
-      };
-    `;
+    if (!isNative) {
+      // ── Standard Banner ──
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.innerHTML = `
+        atOptions = {
+          'key' : '${id}',
+          'format' : 'iframe',
+          'height' : ${height},
+          'width' : ${width},
+          'params' : {}
+        };
+      `;
 
-    const invokeScript = document.createElement('script');
-    invokeScript.type = 'text/javascript';
-    invokeScript.src = `//www.highperformanceformat.com/${id}/invoke.js`;
+      const invokeScript = document.createElement('script');
+      invokeScript.type = 'text/javascript';
+      // Banners usually use highperformanceformat.com
+      invokeScript.src = `https://www.highperformanceformat.com/${id}/invoke.js`;
+      invokeScript.onerror = () => console.warn(`Ad unit ${id} failed to load.`);
 
-    adRef.current.appendChild(script);
-    adRef.current.appendChild(invokeScript);
+      adRef.current.appendChild(script);
+      adRef.current.appendChild(invokeScript);
+    } else {
+      // ── Native Banner ──
+      // Native banners often need a specific container ID
+      const container = document.createElement('div');
+      container.id = `container-${id}`;
+      adRef.current.appendChild(container);
+
+      const script = document.createElement('script');
+      script.async = true;
+      script.setAttribute('data-cfasync', 'false');
+      // Native ads from user snippet use profitablecpmratenetwork.com
+      script.src = `https://pl29408650.profitablecpmratenetwork.com/${id}/invoke.js`;
+      
+      adRef.current.appendChild(script);
+    }
 
     return () => {
       if (adRef.current) adRef.current.innerHTML = '';
@@ -46,7 +66,7 @@ const Adsterra: React.FC<AdsterraProps> = ({ id, format = '728x90', className = 
 
   return (
     <div className={`ad-container flex justify-center items-center overflow-hidden my-4 mx-auto ${className}`}>
-      <div ref={adRef} />
+      <div ref={adRef} className="w-full" />
     </div>
   );
 };
@@ -59,7 +79,7 @@ function getDimensions(format: string): [number, number] {
     case '468x60': return [468, 60];
     case '320x50': return [320, 50];
     case '160x300': return [160, 300];
-    case 'native': return [0, 0]; // Native handled differently usually, but often works with iframe too
+    case 'native': return [0, 0];
     default: return [728, 90];
   }
 }

@@ -191,7 +191,7 @@ const VisitorStats = () => {
         </div>
 
         <div className="mt-12 text-center">
-          <Adsterra id="29308150" format="728x90" className="mb-8" />
+          <Adsterra id="2604f27bec8c20d84e78ee4fcc689930" format="728x90" className="mb-8" />
           <p className="text-[10px] text-stone-700 uppercase tracking-[0.5em] mb-4">
             Secured and Encrypted by Archive Sentinel v2.4
           </p>

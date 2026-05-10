@@ -11,7 +11,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[#1c1917] text-stone-300 font-serif overflow-x-hidden">
       {/* Top Ad Unit - 728x90 */}
-      <Adsterra id="29308150" format="728x90" className="bg-black/20 py-2 border-b border-white/5" />
+      <Adsterra id="2604f27bec8c20d84e78ee4fcc689930" format="728x90" className="bg-black/20 py-2 border-b border-white/5" />
 
       {/* Navigation */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8 flex justify-between items-center border-b border-white/5">
@@ -60,7 +60,7 @@ const LandingPage = () => {
 
       {/* In-content Ad Unit - Native */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <Adsterra id="29308151" format="native" />
+        <Adsterra id="49ffa0c0b1f6fda363ee8d0b774e4d57" format="native" />
       </div>
 
       {/* Feature Section */}
@@ -96,7 +96,7 @@ const LandingPage = () => {
 
       {/* Pre-footer Ad Unit - 468x60 */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <Adsterra id="29308148" format="468x60" />
+        <Adsterra id="d471dc67894803d79938f4c2f64adae9" format="468x60" />
       </div>
 
       {/* Footer */}
